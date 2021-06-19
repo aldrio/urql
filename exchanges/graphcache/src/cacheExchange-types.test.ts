@@ -45,32 +45,36 @@ type WithTypename<T extends { __typename?: any }> = {
 } & { __typename: NonNullable<T['__typename']> };
 
 type GraphCacheKeysConfig = {
-  Todo?: (data: WithTypename<Todo>) => null | string;
+  Author?: (data: WithTypename<Author>) => null | string;
 };
 
 type GraphCacheResolvers = {
   Query?: {
     todos?: GraphCacheResolver<
       WithTypename<Query>,
-      null,
+      Record<string, never>,
       Array<WithTypename<Todo> | string>
     >;
   };
   Todo?: {
-    id?: GraphCacheResolver<WithTypename<Todo>, null, Scalars['ID'] | string>;
+    id?: GraphCacheResolver<
+      WithTypename<Todo>,
+      Record<string, never>,
+      Scalars['ID'] | string
+    >;
     text?: GraphCacheResolver<
       WithTypename<Todo>,
-      null,
+      Record<string, never>,
       Scalars['String'] | string
     >;
     complete?: GraphCacheResolver<
       WithTypename<Todo>,
-      null,
+      Record<string, never>,
       Scalars['Boolean'] | string
     >;
     author?: GraphCacheResolver<
       WithTypename<Todo>,
-      null,
+      Record<string, never>,
       WithTypename<Author> | string
     >;
   };
@@ -104,7 +108,7 @@ describe('typings', function () {
   it('should work with a generic', function () {
     cacheExchange<GraphCacheConfig>({
       keys: {
-        Author: data => data.name,
+        Author: data => data.name ?? null,
       },
       updates: {
         Mutation: {
@@ -115,7 +119,10 @@ describe('typings', function () {
       },
       resolvers: {
         Query: {
-          todos: parent => parent.todos?.reverse(),
+          todos: parent =>
+            parent.todos
+              ?.reverse()
+              .map(todo => ({ __typename: 'Todo', ...todo })) ?? [],
         },
       },
       optimistic: {
